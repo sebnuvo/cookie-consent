@@ -20,11 +20,11 @@
   var defaults = {
     position: 'bottom-right',  // 'bottom-right' | 'bottom-left' | 'bottom-center'
     delay: 0,                  // ms before showing banner
-    showStickyButton: true,    // show floating settings button after consent
+    showStickyButton: false,   // use footer link instead of floating button
     policyUrl: '/policies',
     termsUrl: '/website-terms-and-conditions',
     bannerTitle: 'We value your privacy',
-    bannerText: 'We use cookies to improve your experience, analyze site traffic, and deliver relevant marketing. You can customize your preferences or accept all cookies.',
+    bannerText: 'We use cookies and similar tracking technologies to analyze site traffic, personalize content, and serve targeted advertising. Some of these technologies transmit data — including your IP address and device identifiers — to third-party services. These technologies will not activate until you provide your consent. You can accept all, reject all, or customize your preferences below.',
     modalTitle: 'Cookie Preferences',
     modalDesc: 'Manage your cookie preferences below. Essential cookies are always active as they are required for the website to function.',
     onAcceptAll: null,
@@ -130,7 +130,7 @@
 
     // Text
     var text = el('p', { className: 'nuvo-cc-banner__text' });
-    text.innerHTML = _cfg.bannerText + ' <a href="' + _cfg.policyUrl + '" target="_blank" rel="noopener">Privacy Policy</a>';
+    text.innerHTML = _cfg.bannerText + '<br><a href="' + _cfg.policyUrl + '" target="_blank" rel="noopener">Privacy Policy</a>';
 
     // Actions
     var actions = el('div', { className: 'nuvo-cc-banner__actions' });
