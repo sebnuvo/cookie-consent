@@ -1,0 +1,554 @@
+/**
+ * Nuvocargo Cookie Consent — Styles
+ *
+ * Fully self-contained CSS for the consent banner and preferences modal.
+ * Uses CSS custom properties for easy theming. Designed to match the
+ * Nuvocargo design system (warm neutrals, brand-forest green, flat UI,
+ * pill-shaped buttons, no shadows).
+ *
+ * @version 1.0.0
+ */
+
+/* ─── Custom Properties / Design Tokens ─────────────────────────── */
+:root {
+  /* Brand colors — from Nuvocargo design system */
+  --cc-brand-green: #1b473f;
+  --cc-brand-forest: #2c7452;
+  --cc-brand-cream: #faf8f6;
+  --cc-brand-blue: #3e60b7;
+
+  /* Surface scale (warm gray) */
+  --cc-surface-1: #ffffff;
+  --cc-surface-2: #faf8f6;
+  --cc-surface-3: #ede9e6;
+  --cc-surface-4: #e0dbd7;
+  --cc-surface-5: #d0ccc8;
+  --cc-surface-8: #65605b;
+  --cc-surface-11: #1e1c19;
+  --cc-surface-12: #14110e;
+
+  /* Green scale */
+  --cc-green-1: #f2f9f5;
+  --cc-green-3: #d5e9df;
+  --cc-green-7: #4baa81;
+  --cc-green-9: #2c7452;
+  --cc-green-10: #1d4733;
+
+  /* Layout */
+  --cc-z-index: 999999;
+  --cc-radius-lg: 12px;
+  --cc-radius-md: 8px;
+  --cc-radius-pill: 9999px;
+
+  /* Typography */
+  --cc-font: 'Value Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cc-text-sm: 0.8125rem; /* 13px */
+  --cc-text-base: 0.875rem; /* 14px */
+  --cc-text-md: 1rem; /* 16px */
+  --cc-text-lg: 1.125rem; /* 18px */
+
+  /* Animation */
+  --cc-transition: 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ─── Reset / Scoping ───────────────────────────────────────────── */
+.nuvo-cc *,
+.nuvo-cc *::before,
+.nuvo-cc *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.nuvo-cc {
+  font-family: var(--cc-font);
+  font-size: var(--cc-text-base);
+  line-height: 1.5;
+  color: var(--cc-surface-12);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Banner (Bottom-right popup) ───────────────────────────────── */
+.nuvo-cc-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: var(--cc-z-index);
+  width: 420px;
+  max-width: calc(100vw - 48px);
+  background: var(--cc-surface-1);
+  border: 1px solid var(--cc-surface-4);
+  border-radius: var(--cc-radius-lg);
+  overflow: hidden;
+
+  /* Animation — slide up + fade in */
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--cc-transition), transform var(--cc-transition);
+  pointer-events: none;
+}
+
+.nuvo-cc-banner.nuvo-cc-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.nuvo-cc-banner.nuvo-cc-hiding {
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+}
+
+.nuvo-cc-banner--bottom-left {
+  right: auto;
+  left: 24px;
+}
+
+.nuvo-cc-banner--bottom-center {
+  right: auto;
+  left: 50%;
+  transform: translate(-50%, 20px);
+}
+
+.nuvo-cc-banner--bottom-center.nuvo-cc-visible {
+  transform: translate(-50%, 0);
+}
+
+.nuvo-cc-banner--bottom-center.nuvo-cc-hiding {
+  transform: translate(-50%, 20px);
+}
+
+.nuvo-cc-banner__inner {
+  padding: 24px;
+}
+
+.nuvo-cc-banner__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--cc-green-1);
+  border-radius: var(--cc-radius-md);
+  margin-bottom: 16px;
+  color: var(--cc-green-9);
+  flex-shrink: 0;
+}
+
+.nuvo-cc-banner__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nuvo-cc-banner__title {
+  font-size: var(--cc-text-md);
+  font-weight: 500;
+  color: var(--cc-surface-12);
+  margin-bottom: 8px;
+  letter-spacing: -0.005em;
+}
+
+.nuvo-cc-banner__text {
+  font-size: var(--cc-text-sm);
+  color: var(--cc-surface-8);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.nuvo-cc-banner__text a {
+  color: var(--cc-green-9);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 200ms ease;
+}
+
+.nuvo-cc-banner__text a:hover {
+  color: var(--cc-green-10);
+}
+
+/* ─── Banner Actions ────────────────────────────────────────────── */
+.nuvo-cc-banner__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nuvo-cc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 20px;
+  border-radius: var(--cc-radius-pill);
+  font-family: var(--cc-font);
+  font-size: var(--cc-text-sm);
+  font-weight: 500;
+  letter-spacing: 0;
+  cursor: pointer;
+  border: none;
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease, transform 100ms ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.nuvo-cc-btn:active {
+  transform: scale(0.97);
+}
+
+/* Primary — green fill */
+.nuvo-cc-btn--primary {
+  background: var(--cc-green-9);
+  color: #ffffff;
+}
+
+.nuvo-cc-btn--primary:hover {
+  background: var(--cc-green-10);
+}
+
+/* Secondary — outline */
+.nuvo-cc-btn--secondary {
+  background: transparent;
+  color: var(--cc-surface-12);
+  border: 1px solid var(--cc-surface-5);
+}
+
+.nuvo-cc-btn--secondary:hover {
+  background: var(--cc-surface-3);
+  border-color: var(--cc-surface-5);
+}
+
+/* Ghost — text only */
+.nuvo-cc-btn--ghost {
+  background: transparent;
+  color: var(--cc-surface-8);
+  padding: 0 12px;
+}
+
+.nuvo-cc-btn--ghost:hover {
+  color: var(--cc-surface-12);
+  background: var(--cc-surface-3);
+}
+
+/* ─── Preferences Modal ─────────────────────────────────────────── */
+.nuvo-cc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--cc-z-index) + 1);
+  background: rgba(20, 17, 14, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  opacity: 0;
+  transition: opacity var(--cc-transition);
+  pointer-events: none;
+}
+
+.nuvo-cc-overlay.nuvo-cc-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nuvo-cc-modal {
+  width: 520px;
+  max-width: 100%;
+  max-height: calc(100vh - 48px);
+  background: var(--cc-surface-1);
+  border: 1px solid var(--cc-surface-4);
+  border-radius: var(--cc-radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  transform: translateY(16px) scale(0.98);
+  transition: transform var(--cc-transition);
+}
+
+.nuvo-cc-overlay.nuvo-cc-visible .nuvo-cc-modal {
+  transform: translateY(0) scale(1);
+}
+
+.nuvo-cc-modal__header {
+  padding: 24px 24px 0;
+}
+
+.nuvo-cc-modal__title {
+  font-size: var(--cc-text-lg);
+  font-weight: 500;
+  color: var(--cc-surface-12);
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.nuvo-cc-modal__desc {
+  font-size: var(--cc-text-sm);
+  color: var(--cc-surface-8);
+  line-height: 1.6;
+}
+
+.nuvo-cc-modal__desc a {
+  color: var(--cc-green-9);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ─── Category List ─────────────────────────────────────────────── */
+.nuvo-cc-categories {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nuvo-cc-category {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--cc-radius-md);
+  transition: background 200ms ease;
+}
+
+.nuvo-cc-category:hover {
+  background: var(--cc-surface-2);
+}
+
+.nuvo-cc-category__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nuvo-cc-category__label {
+  font-size: var(--cc-text-base);
+  font-weight: 500;
+  color: var(--cc-surface-12);
+  margin-bottom: 2px;
+}
+
+.nuvo-cc-category__desc {
+  font-size: var(--cc-text-sm);
+  color: var(--cc-surface-8);
+  line-height: 1.5;
+}
+
+/* ─── Toggle Switch ─────────────────────────────────────────────── */
+.nuvo-cc-toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  margin-top: 2px;
+}
+
+.nuvo-cc-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.nuvo-cc-toggle__track {
+  position: absolute;
+  inset: 0;
+  background: var(--cc-surface-4);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+
+.nuvo-cc-toggle__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nuvo-cc-toggle input:checked + .nuvo-cc-toggle__track {
+  background: var(--cc-green-9);
+}
+
+.nuvo-cc-toggle input:checked + .nuvo-cc-toggle__track::after {
+  transform: translateX(20px);
+}
+
+.nuvo-cc-toggle input:disabled + .nuvo-cc-toggle__track {
+  background: var(--cc-green-3);
+  cursor: not-allowed;
+}
+
+.nuvo-cc-toggle input:disabled:checked + .nuvo-cc-toggle__track {
+  background: var(--cc-green-7);
+  opacity: 0.6;
+}
+
+.nuvo-cc-toggle input:focus-visible + .nuvo-cc-toggle__track {
+  outline: 2px solid var(--cc-green-7);
+  outline-offset: 2px;
+}
+
+/* ─── Modal Footer ──────────────────────────────────────────────── */
+.nuvo-cc-modal__footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--cc-surface-3);
+}
+
+/* ─── Sticky Reopen Button ──────────────────────────────────────── */
+.nuvo-cc-sticky {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: calc(var(--cc-z-index) - 1);
+  width: 44px;
+  height: 44px;
+  background: var(--cc-surface-1);
+  border: 1px solid var(--cc-surface-4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--cc-surface-8);
+  transition: background 200ms ease, color 200ms ease, transform 200ms ease, opacity var(--cc-transition);
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.nuvo-cc-sticky.nuvo-cc-visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.nuvo-cc-sticky:hover {
+  background: var(--cc-surface-3);
+  color: var(--cc-surface-12);
+  transform: scale(1.05);
+}
+
+.nuvo-cc-sticky:active {
+  transform: scale(0.95);
+}
+
+.nuvo-cc-sticky svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ─── Required badge ────────────────────────────────────────────── */
+.nuvo-cc-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--cc-surface-8);
+  background: var(--cc-surface-3);
+  border-radius: var(--cc-radius-pill);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ─── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .nuvo-cc-banner {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+
+  .nuvo-cc-banner--bottom-left,
+  .nuvo-cc-banner--bottom-center {
+    right: 12px;
+    left: 12px;
+  }
+
+  .nuvo-cc-banner--bottom-center {
+    transform: translateY(20px);
+  }
+
+  .nuvo-cc-banner--bottom-center.nuvo-cc-visible {
+    transform: translateY(0);
+  }
+
+  .nuvo-cc-banner--bottom-center.nuvo-cc-hiding {
+    transform: translateY(20px);
+  }
+
+  .nuvo-cc-banner__inner {
+    padding: 20px;
+  }
+
+  .nuvo-cc-banner__actions {
+    flex-direction: column;
+  }
+
+  .nuvo-cc-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .nuvo-cc-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .nuvo-cc-modal {
+    max-height: calc(100vh - 24px);
+  }
+
+  .nuvo-cc-modal__footer {
+    flex-direction: column;
+  }
+
+  .nuvo-cc-modal__footer .nuvo-cc-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .nuvo-cc-sticky {
+    bottom: 12px;
+    left: 12px;
+  }
+}
+
+/* ─── Accessibility: prefers-reduced-motion ─────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .nuvo-cc-banner,
+  .nuvo-cc-overlay,
+  .nuvo-cc-modal,
+  .nuvo-cc-sticky,
+  .nuvo-cc-toggle__track,
+  .nuvo-cc-toggle__track::after {
+    transition-duration: 0ms;
+  }
+}
+
+/* ─── Print — hide everything ───────────────────────────────────── */
+@media print {
+  .nuvo-cc-banner,
+  .nuvo-cc-overlay,
+  .nuvo-cc-sticky {
+    display: none !important;
+  }
+}

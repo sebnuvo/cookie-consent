@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Consent — Demo | Nuvocargo</title>
+  <meta name="description" content="Demo page for Nuvocargo's cookie consent system">
+
+  <!-- Google Fonts fallback (Value Sans not available via CDN) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Cookie Consent Styles -->
+  <link rel="stylesheet" href="consent-styles.css">
+
+  <style>
+    /* Override font for demo (Value Sans not available publicly) */
+    :root {
+      --cc-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    /* Demo page styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #faf8f6;
+      color: #14110e;
+      min-height: 100vh;
+    }
+
+    .demo-header {
+      background: #1b473f;
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .demo-header__logo {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .demo-header__nav {
+      display: flex;
+      gap: 24px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .demo-header__nav a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .demo-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    .demo-hero {
+      text-align: center;
+      padding: 48px 0;
+    }
+
+    .demo-hero h1 {
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      color: #14110e;
+    }
+
+    .demo-hero p {
+      font-size: 1rem;
+      color: #65605b;
+      line-height: 1.6;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .demo-section {
+      background: white;
+      border: 1px solid #e0dbd7;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .demo-section h2 {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: #14110e;
+    }
+
+    .demo-section p {
+      font-size: 0.875rem;
+      color: #65605b;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .demo-status {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .demo-status__item {
+      background: #faf8f6;
+      border: 1px solid #ede9e6;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .demo-status__label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #65605b;
+      margin-bottom: 4px;
+    }
+
+    .demo-status__value {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .demo-status__value.granted {
+      color: #2c7452;
+    }
+
+    .demo-status__value.denied {
+      color: #c5342d;
+    }
+
+    .demo-status__value.pending {
+      color: #65605b;
+    }
+
+    .demo-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .demo-btn {
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 9999px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #d0ccc8;
+      background: white;
+      color: #14110e;
+      transition: all 200ms ease;
+    }
+
+    .demo-btn:hover {
+      background: #ede9e6;
+    }
+
+    .demo-scripts {
+      margin-top: 12px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+    }
+
+    .demo-scripts__item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      background: #faf8f6;
+    }
+
+    .demo-scripts__dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .demo-scripts__dot.active { background: #2c7452; }
+    .demo-scripts__dot.blocked { background: #c5342d; }
+    .demo-scripts__dot.pending { background: #d0ccc8; }
+
+    .demo-scripts__name {
+      color: #65605b;
+    }
+
+    .demo-log {
+      margin-top: 12px;
+      background: #14110e;
+      color: #9ccfb5;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .demo-log:empty::before {
+      content: '// Consent events will appear here...';
+      color: #65605b;
+    }
+  </style>
+
+  <!--
+    ┌─────────────────────────────────────────────────────────────┐
+    │  STEP 1: Load consent-manager.js BEFORE any tracking       │
+    │  scripts. This sets Google Consent Mode v2 defaults.        │
+    └─────────────────────────────────────────────────────────────┘
+  -->
+  <script src="consent-manager.js"></script>
+  <script>
+    // Initialize consent manager (this sets Google Consent Mode defaults)
+    NuvoConsent.init({
+      ttlDays: 365, // 12 months
+      // webhookEndpoint: 'https://your-endpoint.com/consent',  // Optional
+      // storageEndpoint: 'https://your-endpoint.com/store',    // Optional
+    });
+  </script>
+
+  <!--
+    ┌─────────────────────────────────────────────────────────────┐
+    │  STEP 2: Load integration scripts. They self-gate based    │
+    │  on consent events — won't fire until permission granted.  │
+    └─────────────────────────────────────────────────────────────┘
+  -->
+  <script src="integrations/google-analytics.js"></script>
+  <script src="integrations/hotjar.js"></script>
+  <script src="integrations/linkedin.js"></script>
+  <script src="integrations/hubspot.js"></script>
+  <script src="integrations/unify.js"></script>
+
+</head>
+<body>
+
+  <!-- Demo Header -->
+  <header class="demo-header">
+    <div class="demo-header__logo">Nuvocargo</div>
+    <nav class="demo-header__nav">
+      <a href="#">Solutions</a>
+      <a href="#">Technology</a>
+      <a href="#">Resources</a>
+      <a href="#">Company</a>
+    </nav>
+  </header>
+
+  <div class="demo-container">
+    <!-- Hero -->
+    <div class="demo-hero">
+      <h1>Cookie Consent System — Demo</h1>
+      <p>This page demonstrates the custom consent manager. Interact with the banner below and observe real-time status changes.</p>
+    </div>
+
+    <!-- Consent Status -->
+    <div class="demo-section">
+      <h2>Consent Status</h2>
+      <p>Real-time consent state for each category.</p>
+
+      <div class="demo-status" id="consentStatus">
+        <div class="demo-status__item">
+          <div class="demo-status__label">Essential</div>
+          <div class="demo-status__value pending" id="status-essential">Pending</div>
+        </div>
+        <div class="demo-status__item">
+          <div class="demo-status__label">Personalization</div>
+          <div class="demo-status__value pending" id="status-personalization">Pending</div>
+        </div>
+        <div class="demo-status__item">
+          <div class="demo-status__label">Analytics</div>
+          <div class="demo-status__value pending" id="status-analytics">Pending</div>
+        </div>
+        <div class="demo-status__item">
+          <div class="demo-status__label">Marketing</div>
+          <div class="demo-status__value pending" id="status-marketing">Pending</div>
+        </div>
+      </div>
+
+      <div class="demo-actions">
+        <button class="demo-btn" onclick="NuvoConsent.reset()">🔄 Reset Consent</button>
+        <button class="demo-btn" onclick="NuvoConsentUI.showPreferences()">⚙️ Open Preferences</button>
+        <button class="demo-btn" onclick="showStoredData()">📦 View localStorage</button>
+      </div>
+    </div>
+
+    <!-- Script Loading Status -->
+    <div class="demo-section">
+      <h2>Script Loading Status</h2>
+      <p>Shows which third-party scripts are loaded vs. blocked based on consent.</p>
+
+      <div class="demo-scripts" id="scriptStatus">
+        <div class="demo-scripts__item">
+          <div class="demo-scripts__dot pending" id="dot-ga"></div>
+          <span class="demo-scripts__name">Google Analytics (GA4) — <span id="label-ga">Waiting for consent</span></span>
+        </div>
+        <div class="demo-scripts__item">
+          <div class="demo-scripts__dot pending" id="dot-gads"></div>
+          <span class="demo-scripts__name">Google Ads — <span id="label-gads">Waiting for consent</span></span>
+        </div>
+        <div class="demo-scripts__item">
+          <div class="demo-scripts__dot pending" id="dot-hotjar"></div>
+          <span class="demo-scripts__name">Hotjar — <span id="label-hotjar">Waiting for consent</span></span>
+        </div>
+        <div class="demo-scripts__item">
+          <div class="demo-scripts__dot pending" id="dot-linkedin"></div>
+          <span class="demo-scripts__name">LinkedIn Insight Tag — <span id="label-linkedin">Waiting for consent</span></span>
+        </div>
+        <div class="demo-scripts__item">
+          <div class="demo-scripts__dot pending" id="dot-hubspot"></div>
+          <span class="demo-scripts__name">HubSpot — <span id="label-hubspot">Waiting for consent</span></span>
+        </div>
+        <div class="demo-scripts__item">
+          <div class="demo-scripts__dot pending" id="dot-unify"></div>
+          <span class="demo-scripts__name">Unify Intent — <span id="label-unify">Waiting for consent</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="demo-section">
+      <h2>Event Log</h2>
+      <p>Live log of consent events dispatched.</p>
+      <div class="demo-log" id="eventLog"></div>
+    </div>
+  </div>
+
+  <!--
+    ┌─────────────────────────────────────────────────────────────┐
+    │  STEP 3: Load the UI component and initialize everything   │
+    │  at the end of body.                                       │
+    └─────────────────────────────────────────────────────────────┘
+  -->
+  <script src="consent-ui.js"></script>
+  <script>
+    // Initialize the consent UI
+    NuvoConsentUI.init({
+      position: 'bottom-right',
+      delay: 0,
+      showStickyButton: true,
+      policyUrl: 'https://www.nuvocargo.com/policies',
+      termsUrl: 'https://www.nuvocargo.com/website-terms-and-conditions'
+    });
+
+    // Initialize integrations with your IDs
+    // (In demo mode, these won't actually fire since IDs are placeholders)
+    NuvoGoogleAnalytics.init({
+      ga4Ids: ['G-CB83HRM5ZT', 'G-S94DL5K7BS'],
+      adsIds: ['AW-362111133', 'AW-11055144811']
+    });
+
+    NuvoHotjar.init({ id: 'YOUR_HOTJAR_ID' });
+    NuvoLinkedIn.init({ id: '2929228' });
+    NuvoHubSpot.init({ portalId: '6484927' });
+    NuvoUnify.init({ writeKey: 'YOUR_UNIFY_WRITE_KEY' });
+
+    // ─── Demo: Live status updates ───────────────────────────────
+    function updateStatus() {
+      var cats = ['essential', 'personalization', 'analytics', 'marketing'];
+      cats.forEach(function (cat) {
+        var el = document.getElementById('status-' + cat);
+        if (!el) return;
+
+        if (!NuvoConsent.hasInteracted()) {
+          el.textContent = 'Pending';
+          el.className = 'demo-status__value pending';
+        } else if (NuvoConsent.hasConsent(cat)) {
+          el.textContent = 'Granted ✓';
+          el.className = 'demo-status__value granted';
+        } else {
+          el.textContent = 'Denied ✗';
+          el.className = 'demo-status__value denied';
+        }
+      });
+
+      // Script loading status
+      updateScriptStatus('ga', NuvoConsent.hasConsent('analytics'), 'Analytics');
+      updateScriptStatus('gads', NuvoConsent.hasConsent('marketing'), 'Marketing');
+      updateScriptStatus('hotjar', NuvoConsent.hasConsent('analytics'), 'Analytics');
+      updateScriptStatus('linkedin', NuvoConsent.hasConsent('marketing'), 'Marketing');
+      updateScriptStatus('hubspot', NuvoConsent.hasConsent('marketing'), 'Marketing');
+      updateScriptStatus('unify', NuvoConsent.hasConsent('analytics'), 'Analytics');
+    }
+
+    function updateScriptStatus(id, granted, category) {
+      var dot = document.getElementById('dot-' + id);
+      var label = document.getElementById('label-' + id);
+      if (!dot || !label) return;
+
+      if (!NuvoConsent.hasInteracted()) {
+        dot.className = 'demo-scripts__dot pending';
+        label.textContent = 'Waiting for consent';
+      } else if (granted) {
+        dot.className = 'demo-scripts__dot active';
+        label.textContent = 'Loaded (' + category + ' granted)';
+      } else {
+        dot.className = 'demo-scripts__dot blocked';
+        label.textContent = 'Blocked (' + category + ' denied)';
+      }
+    }
+
+    function logEvent(msg) {
+      var log = document.getElementById('eventLog');
+      var time = new Date().toLocaleTimeString();
+      log.innerHTML += '<div>[' + time + '] ' + msg + '</div>';
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function showStoredData() {
+      var data = localStorage.getItem('nuvo_cookie_consent');
+      if (data) {
+        logEvent('localStorage → ' + data);
+      } else {
+        logEvent('localStorage → (empty — no consent stored)');
+      }
+    }
+
+    // Listen for consent events
+    window.addEventListener('nuvo-consent-updated', function (e) {
+      updateStatus();
+      var cats = e.detail.categories;
+      var parts = Object.keys(cats).map(function (k) { return k + ':' + (cats[k] ? '✓' : '✗'); });
+      logEvent((e.detail.isInitial ? 'RESTORED' : 'UPDATED') + ' → ' + parts.join(' | '));
+    });
+
+    window.addEventListener('nuvo-consent-reset', function () {
+      updateStatus();
+      logEvent('RESET → All consent cleared');
+    });
+
+    // Initial status
+    updateStatus();
+  </script>
+
+</body>
+</html>
