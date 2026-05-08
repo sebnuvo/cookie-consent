@@ -44,7 +44,7 @@ npx serve .
 For Webflow, host the files in a **public GitHub repo** and load them through a pinned jsDelivr URL:
 
 ```text
-https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/
+https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/
 ```
 
 Use a version tag like `@v1.0.0` or a commit SHA for production. Avoid `@latest` in Webflow because CDN caches can make urgent fixes unpredictable.
@@ -55,26 +55,27 @@ Paste the following into **Project Settings → Custom Code → Head Code**:
 
 ```html
 <!-- ═══ Cookie Consent — HEAD CODE ═══ -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/consent-styles.css">
-<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/consent-manager.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/consent-styles.css">
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/consent-manager.js"></script>
 <script>
   NuvoConsent.init({
     ttlDays: 365
     // webhookEndpoint: 'https://your-api.com/consent'  // Optional
   });
 </script>
-<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/integrations/google-analytics.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/integrations/hotjar.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/integrations/linkedin.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/integrations/hubspot.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/integrations/unify.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/integrations/google-analytics.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/integrations/hotjar.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/integrations/linkedin.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/integrations/hubspot.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/integrations/unify.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/integrations/meta-pixel.js"></script>
 ```
 
 Then in **Project Settings → Custom Code → Footer Code**:
 
 ```html
 <!-- ═══ Cookie Consent — FOOTER CODE ═══ -->
-<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.1.0/consent-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sebnuvo/cookie-consent@v1.2.0/consent-ui.js"></script>
 <script>
   NuvoConsentUI.init({
     position: 'bottom-right',
@@ -96,10 +97,11 @@ Then in **Project Settings → Custom Code → Footer Code**:
     workspaceId: 'DNR9Kdd6orguQgyBafQdQX',
     apiKey: 'wk_6NffW6BA_8WY8iE5562Suy6nDMXjSR7fuyg2SZakU'
   });
+  NuvoMetaPixel.init({ pixelId: '1338275693333748' });
 </script>
 ```
 
-> **Important:** Replace `sebnuvo/cookie-consent@v1.1.0` with the actual public repo and release tag/commit SHA. You can host for free using:
+> **Important:** Replace `sebnuvo/cookie-consent@v1.2.0` with the actual public repo and release tag/commit SHA. You can host for free using:
 > - **GitHub repo** + jsDelivr (`https://cdn.jsdelivr.net/gh/your-org/repo@v1.0.0/`)
 > - **Cloudflare Pages**
 > - **AWS S3 + CloudFront**
