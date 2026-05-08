@@ -1,11 +1,9 @@
 /**
  * Nuvocargo Cookie Consent — Unify Intent Integration
- *
+ * 
  * Loads the Unify Intent analytics script only after Analytics consent
- * is granted. The page view API is called once loaded.
- *
- * Endpoint: https://api.unifyintent.com/analytics/v1/page
- *
+ * is granted. The new snippet loads the script using workspaceId and apiKey.
+ * 
  * @version 1.0.0
  * @requires consent-manager.js
  */
@@ -14,32 +12,32 @@
 
   var _loaded = false;
 
-  function loadUnify(writeKey) {
-    if (_loaded || !writeKey) return;
+  function loadUnify(workspaceId, apiKey) {
+    if (_loaded || !workspaceId || !apiKey) return;
     _loaded = true;
 
     // Unify Intent analytics snippet
-    // This loads the Unify script and sends an initial page view
-    !function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Unify snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","debug","page","once","off","on","addSourceMiddleware","addIntegrationMiddleware","setAnonymousId","addDestinationMiddleware"];analytics.factory=function(e){return function(){var t=Array.prototype.slice.call(arguments);t.unshift(e);analytics.push(t);return analytics}};for(var e=0;e<analytics.methods.length;e++){var key=analytics.methods[e];analytics[key]=analytics.factory(key)}analytics.load=function(key,e){var t=document.createElement("script");t.type="text/javascript";t.async=!0;t.src="https://cdn.unifyintent.com/analytics.js/v1/"+key+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n);analytics._loadOptions=e};analytics._writeKey=writeKey;analytics.SNIPPET_VERSION="5.2.1";analytics.load(writeKey);analytics.page()}}();
+    !function(){var e=["identify","page","startAutoPage","stopAutoPage","startAutoIdentify","stopAutoIdentify"];function t(o){return Object.assign([],e.reduce(function(r,n){return r[n]=function(){return o.push([n,[].slice.call(arguments)]),o},r},{}))}window.unify||(window.unify=t(window.unify)),window.unifyBrowser||(window.unifyBrowser=t(window.unifyBrowser));var n=document.createElement("script");n.async=!0,n.setAttribute("src","https://tag.unifyintent.com/v1/"+workspaceId+"/script.js"),n.setAttribute("data-api-key",apiKey),n.setAttribute("id","unifytag"),(document.body||document.head).appendChild(n)}();
   }
 
   function init(config) {
     config = config || {};
-    var writeKey = config.writeKey;
+    var workspaceId = config.workspaceId;
+    var apiKey = config.apiKey;
 
-    if (!writeKey) {
-      console.warn('[NuvoConsent:Unify] No Unify write key provided.');
+    if (!workspaceId || !apiKey) {
+      console.warn('[NuvoConsent:Unify] Missing workspaceId or apiKey.');
       return;
     }
 
     // If already consented to analytics, load immediately
     if (typeof NuvoConsent !== 'undefined' && NuvoConsent.hasConsent('analytics')) {
-      loadUnify(writeKey);
+      loadUnify(workspaceId, apiKey);
     }
 
     // Listen for future consent
     window.addEventListener('nuvo-consent-granted-analytics', function () {
-      loadUnify(writeKey);
+      loadUnify(workspaceId, apiKey);
     });
   }
 
