@@ -47,4 +47,24 @@
   }
 
   window.NuvoHotjar = { init: init };
+
+  // ────────────────────────────────────────────────────────────────
+  // Auto-boot from window.NUVO_CONSENT_CONFIG.hotjar
+  // No per-page init() call required. Order-independent: boots now if the
+  // consent manager is ready, otherwise on `nuvo-consent-ready`.
+  // A missing config slice is legitimate (this tag simply is not in use) and
+  // stays silent; a missing config *object* is reported by consent-manager.
+  // ────────────────────────────────────────────────────────────────
+  function autoBoot() {
+    var mgr = window.NuvoConsent;
+    if (!mgr || typeof mgr.isReady !== 'function' || !mgr.isReady()) return false;
+    var slice = mgr.config('hotjar');
+    if (!slice || !Object.keys(slice).length) return true; // not configured, by design
+    init(slice);
+    return true;
+  }
+
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    if (!autoBoot()) window.addEventListener('nuvo-consent-ready', autoBoot, { once: true });
+  }
 })();

@@ -541,4 +541,28 @@
     showBanner: showBanner
   };
 
+  // ────────────────────────────────────────────────────────────────
+  // Auto-boot. Renders the banner without a per-page init() call.
+  // Runs immediately if NuvoConsent is already initialised, otherwise waits
+  // for `nuvo-consent-ready` — so script order does not matter.
+  // ────────────────────────────────────────────────────────────────
+  function autoBoot() {
+    var mgr = root.NuvoConsent;
+    if (!mgr || typeof mgr.isReady !== 'function' || !mgr.isReady()) return false;
+    if (mgr.config('autoInit') === false) return true;
+    // The DOM must exist before we can append the banner.
+    if (!root.document || !root.document.body) {
+      root.document.addEventListener('DOMContentLoaded', function () {
+        root.NuvoConsentUI.init(mgr.config('ui'));
+      }, { once: true });
+      return true;
+    }
+    root.NuvoConsentUI.init(mgr.config('ui'));
+    return true;
+  }
+
+  if (typeof root !== 'undefined' && root.addEventListener) {
+    if (!autoBoot()) root.addEventListener('nuvo-consent-ready', autoBoot, { once: true });
+  }
+
 })(typeof window !== 'undefined' ? window : this);

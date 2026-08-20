@@ -1,5 +1,19 @@
 # Nuvocargo Cookie Consent System
 
+> ## v1.3.0 — no more `init()` calls
+>
+> Declare **one** config object and every piece wires itself up. See **[INSTALL.md](INSTALL.md)**.
+>
+> **Why this changed.** Before 1.3.0 each consumer had to make eight separate `init()` calls, and
+> forgetting any of them failed **silently**. nuvocargo.com loaded all eight assets and called none of
+> them from May to August 2026 — no banner rendered, no consent was possible, and GA4, HubSpot,
+> LinkedIn, Meta and Unify were dark for three months with nothing in the console.
+>
+> After every deploy, run `NuvoConsent.status()` in the browser console. `initialized: false` means
+> nothing is tracking.
+
+
+
 A portable, vanilla JavaScript cookie consent manager with Google Consent Mode v2 support. Designed for Nuvocargo's website — works on Webflow today, and migrates to any infrastructure with zero changes.
 
 ## Features
