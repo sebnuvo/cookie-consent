@@ -13,7 +13,7 @@ One config object. No `init()` calls.
       adsIds: ['AW-362111133', 'AW-11055144811']
     },
     hubspot:  { portalId: '6484927' },
-    linkedin: { partnerId: '2929228' }
+    linkedin: { id: '2929228' }              // `partnerId` also accepted
     // omit any integration you are not using — omission is silent and intended
   };
 </script>

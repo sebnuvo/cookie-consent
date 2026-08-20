@@ -11,10 +11,18 @@ export function makeDom({ readyState = 'complete' } = {}) {
     innerHTML: '', textContent: '', className: '', id: '',
   });
 
+  // LinkedIn's snippet does getElementsByTagName('script')[0].parentNode.insertBefore(...),
+  // so the first script needs a parent that accepts an insert. Records what was
+  // inserted so tests can assert the tag actually went in.
+  const inserted = [];
+  const firstScript = { ...el(), parentNode: { insertBefore: (node) => inserted.push(node) } };
+
   const doc = {
     readyState,
     body: el(),
     head: el(),
+    getElementsByTagName: (tag) => (tag === 'script' ? [firstScript] : []),
+    _inserted: inserted,
     documentElement: { lang: 'en' },
     createElement: el,
     createTextNode: (t) => ({ textContent: t }),

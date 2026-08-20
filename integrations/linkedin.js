@@ -47,7 +47,11 @@
 
   function init(config) {
     config = config || {};
-    var partnerId = config.id;
+    // Accept both spellings. `id` is what this file has always read; `partnerId`
+    // is the name everyone reaches for first (and the name this file's own warning
+    // uses). Taking only one of them made a typo-free config fail silently, which
+    // is the exact class of bug v1.3.0 set out to remove.
+    var partnerId = config.id || config.partnerId;
 
     if (!partnerId) {
       console.warn('[NuvoConsent:LinkedIn] No LinkedIn partner ID provided.');
