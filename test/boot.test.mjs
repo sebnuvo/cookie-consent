@@ -18,6 +18,7 @@ const MANAGER = src('consent-manager.js');
 const UI = src('consent-ui.js');
 const GA = src('integrations/google-analytics.js');
 const HS = src('integrations/hubspot.js');
+const LI = src('integrations/linkedin.js');
 
 const CONFIG = {
   policyUrl: '/policies',
@@ -33,7 +34,7 @@ function boot({ config = CONFIG, order = ['manager', 'ga', 'hs', 'ui'], readySta
   const realError = console.error;
   console.error = (...a) => errors.push(a.join(' '));
   if (config) dom.win.NUVO_CONSENT_CONFIG = config;
-  const files = { manager: MANAGER, ui: UI, ga: GA, hs: HS };
+  const files = { manager: MANAGER, ui: UI, ga: GA, hs: HS, li: LI };
   for (const k of order) new Function(files[k])();
   console.error = realError;
   return { dom, errors };
@@ -148,4 +149,47 @@ test('a LATE-loading integration still boots after the manager is ready', async 
   const configured = (dom.win.dataLayer || []).map((a) => Array.from(a))
     .filter((a) => a[0] === 'config').map((a) => a[1]);
   assert.ok(configured.includes('G-TEST111'), 'a late script must still self-wire');
+});
+
+// ── LinkedIn config key ─────────────────────────────────────────────────────
+// integrations/linkedin.js reads `config.id`, but every other slice in this
+// library names its identifier after the vendor's own term (portalId, pixelId,
+// ga4Ids) — so `partnerId` is what a reader writes, and it used to be what
+// INSTALL.md told them to write. The result was a config that looked complete,
+// raised no error the deployer would see, and left the tag off. Both spellings
+// are accepted now; these tests keep it that way.
+
+const liIds = () => window._linkedin_data_partner_ids || [];
+
+test('LinkedIn boots from the documented `id` key', () => {
+  const { dom } = boot({
+    config: { ...CONFIG, linkedin: { id: '2929228' } },
+    order: ['manager', 'li'],
+  });
+  window.NuvoConsent.acceptAll();
+  assert.deepEqual(liIds(), ['2929228']);
+  assert.equal(dom.doc._inserted.length, 1, 'insight tag script was inserted');
+});
+
+test('LinkedIn also boots from `partnerId` — the name people reach for', () => {
+  boot({
+    config: { ...CONFIG, linkedin: { partnerId: '2929228' } },
+    order: ['manager', 'li'],
+  });
+  window.NuvoConsent.acceptAll();
+  assert.deepEqual(liIds(), ['2929228'], 'partnerId must not fail silently');
+});
+
+test('LinkedIn stays off until marketing consent is granted', () => {
+  boot({ config: { ...CONFIG, linkedin: { id: '2929228' } }, order: ['manager', 'li'] });
+  assert.deepEqual(liIds(), [], 'no tag before the visitor chooses');
+  window.NuvoConsent.rejectAll();
+  assert.deepEqual(liIds(), [], 'rejecting marketing keeps it off');
+});
+
+test('status() reports LinkedIn configured under either key', () => {
+  for (const slice of [{ id: '2929228' }, { partnerId: '2929228' }]) {
+    boot({ config: { ...CONFIG, linkedin: slice }, order: ['manager', 'li'] });
+    assert.equal(window.NuvoConsent.status().configuredIntegrations.linkedin, true);
+  }
 });
