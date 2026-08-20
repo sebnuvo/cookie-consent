@@ -193,6 +193,8 @@
   }
 
   // ─── Main API ──────────────────────────────────────────────────────
+  var VERSION = '1.3.0';
+
   var _config = {};
   var _state = null;
   var _initialized = false;
@@ -238,6 +240,48 @@
 
       _initialized = true;
       return NuvoConsent;
+    },
+
+
+    /**
+     * True once init() has run. Integrations use this to decide whether to
+     * boot immediately or wait for the `nuvo-consent-ready` event.
+     * @returns {boolean}
+     */
+    isReady: function () {
+      return _initialized;
+    },
+
+    /**
+     * Read one integration's slice of the global config.
+     * Lets integrations self-configure instead of requiring a per-page init call.
+     *
+     * @param {string} key — e.g. 'google', 'hubspot', 'ui'
+     * @returns {Object} the slice, or {} when absent
+     */
+    config: function (key) {
+      if (!key) return _config;
+      return _config[key] || {};
+    },
+
+    /**
+     * Diagnostic snapshot. Safe to call from a browser console at any time.
+     * Use this to answer "is consent actually wired up?" in one step.
+     * @returns {Object}
+     */
+    status: function () {
+      var integrations = {};
+      ['ui', 'google', 'hubspot', 'linkedin', 'unify', 'metaPixel', 'hotjar'].forEach(function (k) {
+        integrations[k] = !!(_config && _config[k]);
+      });
+      return {
+        version: VERSION,
+        initialized: _initialized,
+        configPresent: !!(typeof window !== 'undefined' && window.NUVO_CONSENT_CONFIG),
+        hasInteracted: _state !== null,
+        categories: _state ? _state.categories : null,
+        configuredIntegrations: integrations
+      };
     },
 
     /**
@@ -370,6 +414,85 @@
       };
     }
   };
+
+  // ────────────────────────────────────────────────────────────────
+  // Auto-boot
+  //
+  // Before 1.3.0 every consumer had to call NuvoConsent.init(), then
+  // NuvoConsentUI.init(), then one init() per integration. Forgetting any of
+  // them failed silently — the banner never rendered and nothing was ever
+  // tracked. That is what happened on nuvocargo.com between May and August 2026.
+  //
+  // Now: define window.NUVO_CONSENT_CONFIG and every piece wires itself up.
+  // Order-independent — the config object may appear before or after this file.
+  // Set { autoInit: false } to opt out and drive it manually.
+  // ────────────────────────────────────────────────────────────────
+  function readGlobalConfig() {
+    return (typeof window !== 'undefined' && window.NUVO_CONSENT_CONFIG) || null;
+  }
+
+  function announceReady(cfg) {
+    if (typeof window === 'undefined' || typeof CustomEvent !== 'function') return;
+    // Deferred by one task on purpose. This code runs INSIDE the UMD factory,
+    // so `window.NuvoConsent` is not assigned until the factory returns.
+    // Announcing synchronously would let integrations that loaded first wake up
+    // to a `window.NuvoConsent` that does not exist yet, and — because they
+    // listen with { once: true } — never get a second chance.
+    // init() itself stays synchronous, so Consent Mode defaults are still set
+    // before any tag can load.
+    setTimeout(function () {
+      window.dispatchEvent(new CustomEvent('nuvo-consent-ready', { detail: cfg }));
+    }, 0);
+  }
+
+  function tryAutoBoot() {
+    if (_initialized) return true;
+    var cfg = readGlobalConfig();
+    if (!cfg) return false;
+    if (cfg.autoInit === false) return true; // deliberate manual mode
+    NuvoConsent.init(cfg);
+    announceReady(cfg);
+    return true;
+  }
+
+  function warnNotConfigured() {
+    if (_initialized || readGlobalConfig()) return;
+    // Loud on purpose. A silent consent layer is indistinguishable from no
+    // analytics at all, and that is expensive to discover late.
+    var msg = [
+      '[NuvoConsent] NOT INITIALISED — no banner will render and nothing will be tracked.',
+      '',
+      'Add this BEFORE the consent-manager script tag:',
+      '',
+      '  <script>',
+      '    window.NUVO_CONSENT_CONFIG = {',
+      '      policyUrl: "/policies",',
+      '      ui: {},',
+      '      google:   { ga4Ids: ["G-XXXXXXX"], adsIds: ["AW-XXXXXXXXX"] },',
+      '      hubspot:  { portalId: "0000000" }',
+      '    };',
+      '  <\/script>',
+      '',
+      'Then check NuvoConsent.status() in the console.'
+    ].join('\n');
+    if (typeof console !== 'undefined') console.error(msg);
+  }
+
+  if (typeof window !== 'undefined') {
+    if (!tryAutoBoot()) {
+      // Config may be declared after this script. Retry at the two points
+      // where late-declared config becomes visible, then complain.
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          if (!tryAutoBoot()) warnNotConfigured();
+        }, { once: true });
+      } else {
+        setTimeout(function () {
+          if (!tryAutoBoot()) warnNotConfigured();
+        }, 0);
+      }
+    }
+  }
 
   return NuvoConsent;
 });
