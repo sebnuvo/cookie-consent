@@ -5,7 +5,7 @@
  * Handles consent state, localStorage persistence, Google Consent Mode v2,
  * and CustomEvent dispatching for third-party script gating.
  *
- * @version 1.0.0
+ * @version 1.4.0
  * @license MIT
  */
 ;(function (root, factory) {
@@ -192,8 +192,77 @@
     }
   }
 
+  // ─── Regions (v1.4.0) ──────────────────────────────────────────────
+  //
+  // Two regimes, decided by where the visitor is:
+  //   consent  nothing optional runs until the visitor says yes. The default,
+  //            and what applies wherever the country is unknown.
+  //   notice   the categories in `regions.noticeDefaults` run from the first
+  //            page, the banner becomes a notice with an easy opt-out, and the
+  //            visitor's choice (Reject, Customize) always wins. For countries
+  //            whose law is notice-and-opt-out for that kind of processing:
+  //            the US state privacy laws (CCPA/CPRA and others) and Mexico's
+  //            LFPDPPP, for first-party analytics.
+  //
+  // Global Privacy Control is an opt-out everywhere: a browser that sends it
+  // is treated as `consent`, never `notice`. California and several other
+  // states require honouring it.
+  //
+  // Nothing about a notice default is stored. It is re-derived on every page,
+  // so a visitor who travels, or turns GPC on, gets the right answer next time,
+  // and hasInteracted() stays false until the visitor actually chooses.
+  //
+  // Config:
+  //   regions: {
+  //     notice: ['US', 'MX'],                 // ISO country codes
+  //     noticeDefaults: { analytics: true },  // categories on by default there
+  //     countryEndpoint: '/cdn-cgi/trace',    // Cloudflare; answers "loc=XX"
+  //     timeoutMs: 1500                       // then fall back to `consent`
+  //   }
+  var _region = { country: null, mode: 'consent', resolved: false, gpc: false };
+  var _implied = null;
+
+  function hasGpc() {
+    try {
+      return typeof navigator !== 'undefined' && navigator.globalPrivacyControl === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function resolveCountry(cfg, cb) {
+    var done = false;
+    function finish(country) {
+      if (done) return;
+      done = true;
+      cb(country);
+    }
+    if (cfg.country) return finish(String(cfg.country).toUpperCase());
+    try {
+      if (typeof fetch !== 'function') return finish(null);
+      setTimeout(function () { finish(null); }, cfg.timeoutMs || 1500);
+      fetch(cfg.countryEndpoint || '/cdn-cgi/trace', { credentials: 'omit' })
+        .then(function (r) { return r.ok ? r.text() : ''; })
+        .then(function (t) {
+          var m = /(?:^|\n)loc=([A-Z]{2})/.exec(t || '');
+          finish(m ? m[1] : null);
+        })
+        .catch(function () { finish(null); });
+    } catch (e) {
+      finish(null);
+    }
+  }
+
+  function noticeCategories(defaults) {
+    var out = {};
+    Object.keys(CATEGORIES).forEach(function (key) {
+      out[key] = CATEGORIES[key].required || !!(defaults && defaults[key]);
+    });
+    return out;
+  }
+
   // ─── Main API ──────────────────────────────────────────────────────
-  var VERSION = '1.3.0';
+  var VERSION = '1.4.0';
 
   var _config = {};
   var _state = null;
@@ -242,6 +311,42 @@
       return NuvoConsent;
     },
 
+    /**
+     * Work out the visitor's regime (see "Regions" above), apply a notice
+     * default if one applies, then call `done`. Called by the auto-boot before
+     * it announces ready, so integrations and the UI wake up already knowing.
+     * A stored choice always wins and skips the lookup entirely.
+     */
+    resolveRegion: function (done) {
+      var cfg = _config.regions;
+      _region.gpc = hasGpc();
+      if (!cfg || !cfg.notice || !cfg.notice.length || _state || _region.gpc) {
+        _region.resolved = true;
+        if (done) done(_region);
+        return;
+      }
+      resolveCountry(cfg, function (country) {
+        _region.country = country;
+        _region.resolved = true;
+        // Re-checked: the visitor may have chosen while we were asking.
+        if (!_state && country && cfg.notice.indexOf(country) !== -1) {
+          _region.mode = 'notice';
+          _implied = noticeCategories(cfg.noticeDefaults || { analytics: true });
+          updateGoogleConsent(_implied);
+          dispatchConsentEvent(_implied, true);
+        }
+        if (done) done(_region);
+      });
+    },
+
+    /**
+     * Where the visitor is and which regime applies.
+     * @returns {{country: string|null, mode: 'consent'|'notice', resolved: boolean, gpc: boolean}}
+     */
+    region: function () {
+      return Object.assign({}, _region);
+    },
+
 
     /**
      * True once init() has run. Integrations use this to decide whether to
@@ -280,6 +385,8 @@
         configPresent: !!(typeof window !== 'undefined' && window.NUVO_CONSENT_CONFIG),
         hasInteracted: _state !== null,
         categories: _state ? _state.categories : null,
+        region: Object.assign({}, _region),
+        noticeDefaults: _implied ? Object.assign({}, _implied) : null,
         configuredIntegrations: integrations
       };
     },
@@ -297,8 +404,10 @@
      * @returns {boolean}
      */
     hasConsent: function (category) {
-      if (!_state || !_state.categories) return CATEGORIES[category] && CATEGORIES[category].required;
-      return !!_state.categories[category];
+      if (_state && _state.categories) return !!_state.categories[category];
+      // No choice yet: a notice-region default, or only what is required.
+      if (_implied) return !!_implied[category];
+      return !!(CATEGORIES[category] && CATEGORIES[category].required);
     },
 
     /**
@@ -451,7 +560,10 @@
     if (!cfg) return false;
     if (cfg.autoInit === false) return true; // deliberate manual mode
     NuvoConsent.init(cfg);
-    announceReady(cfg);
+    // Ready is announced once the regime is known, so nothing boots twice:
+    // an integration waking up in a notice region finds its default already
+    // applied. Without `regions` this is immediate, as before.
+    NuvoConsent.resolveRegion(function () { announceReady(cfg); });
     return true;
   }
 

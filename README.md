@@ -238,7 +238,11 @@ cookie-consent/
 
 ## Compliance Notes
 
-- **Consent defaults to denied** — No tracking fires before user interaction
+- **Consent defaults to denied** — No tracking fires before user interaction, unless `regions` says otherwise
+- **Region regimes (v1.4.0)** — With `regions: { notice: ['US', 'MX'], noticeDefaults: { analytics: true } }`,
+  visitors Cloudflare places in those countries get the listed categories on by default and a notice banner
+  with Reject / Customize; everyone else, and anyone whose country is unknown, stays opt-in. Global Privacy
+  Control is an opt-out everywhere. `NuvoConsent.region()` → `{ country, mode: 'notice' | 'consent', resolved, gpc }`
 - **Essential cookies are always on** — Cannot be toggled off
 - **12-month TTL** — Users are re-prompted annually (GDPR recommendation)
 - **Google Consent Mode v2** — Proper signals sent for GA4 and Google Ads
