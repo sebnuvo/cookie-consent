@@ -21,6 +21,10 @@
     en: {
       bannerTitle: 'We value your privacy',
       bannerText: 'We use cookies and similar tracking technologies to analyze site traffic, personalize content, and serve targeted advertising. Some of these technologies transmit data \u2014 including your IP address and device identifiers \u2014 to third-party services. These technologies will not activate until you provide your consent. You can accept all, reject all, or customize your preferences below.',
+      // Shown instead of bannerText where analytics runs by default (notice
+      // regions: US, MX). The consent text says nothing activates until the
+      // visitor agrees, which would be untrue there.
+      noticeText: 'We use analytics cookies to understand how visitors use our site, so we can improve it. Advertising cookies stay off unless you accept them. You can turn analytics off at any time with Reject All or Customize.',
       modalTitle: 'Cookie Preferences',
       modalDesc: 'Manage your cookie preferences below. Essential cookies are always active as they are required for the website to function.',
       acceptAll: 'Accept All',
@@ -39,6 +43,7 @@
     es: {
       bannerTitle: 'Valoramos tu privacidad',
       bannerText: 'Utilizamos cookies y tecnolog\u00edas de rastreo similares para analizar el tr\u00e1fico del sitio, personalizar contenido y mostrar publicidad relevante. Algunas de estas tecnolog\u00edas transmiten datos \u2014 incluyendo tu direcci\u00f3n IP e identificadores de dispositivo \u2014 a servicios de terceros. Estas tecnolog\u00edas no se activar\u00e1n hasta que proporciones tu consentimiento. Puedes aceptar todas, rechazar todas o personalizar tus preferencias a continuaci\u00f3n.',
+      noticeText: 'Usamos cookies de an\u00e1lisis para entender c\u00f3mo se usa nuestro sitio y mejorarlo. Las cookies de publicidad permanecen desactivadas a menos que las aceptes. Puedes desactivar el an\u00e1lisis en cualquier momento con Rechazar Todas o Personalizar.',
       modalTitle: 'Preferencias de Cookies',
       modalDesc: 'Administra tus preferencias de cookies a continuaci\u00f3n. Las cookies esenciales siempre est\u00e1n activas ya que son necesarias para el funcionamiento del sitio web.',
       acceptAll: 'Aceptar Todas',
@@ -199,7 +204,8 @@
 
     // Text
     var text = el('p', { className: 'nuvo-cc-banner__text' });
-    text.innerHTML = t('bannerText') + '<br><a href="' + _cfg.policyUrl + '" target="_blank" rel="noopener">' + t('privacyPolicy') + '</a>';
+    var inNotice = typeof NuvoConsent.region === 'function' && NuvoConsent.region().mode === 'notice';
+    text.innerHTML = t(inNotice ? 'noticeText' : 'bannerText') + '<br><a href="' + _cfg.policyUrl + '" target="_blank" rel="noopener">' + t('privacyPolicy') + '</a>';
 
     // Actions
     var actions = el('div', { className: 'nuvo-cc-banner__actions' });
@@ -268,7 +274,9 @@
 
     Object.keys(cats).forEach(function (key) {
       var cat = cats[key];
-      var isChecked = currentConsent ? currentConsent[key] : cat.defaultValue;
+      // No choice yet: show what is actually running, which in a notice
+      // region includes the notice defaults.
+      var isChecked = currentConsent ? currentConsent[key] : NuvoConsent.hasConsent(key);
 
       var row = el('div', { className: 'nuvo-cc-category' });
 
@@ -550,6 +558,9 @@
     var mgr = root.NuvoConsent;
     if (!mgr || typeof mgr.isReady !== 'function' || !mgr.isReady()) return false;
     if (mgr.config('autoInit') === false) return true;
+    // The banner's wording depends on the region, so wait until it is known.
+    // `nuvo-consent-ready` fires right after, so this waits at most one lookup.
+    if (typeof mgr.region === 'function' && !mgr.region().resolved) return false;
     // The DOM must exist before we can append the banner.
     if (!root.document || !root.document.body) {
       root.document.addEventListener('DOMContentLoaded', function () {
