@@ -28,6 +28,9 @@
 
   function init(config) {
     config = config || {};
+    // Which consent category gates this tag. Overridable per site (v1.5.0),
+    // because the right answer depends on how the site uses the vendor.
+    var category = config.category || 'analytics';
     var hjid = config.id;
 
     if (!hjid) {
@@ -36,12 +39,12 @@
     }
 
     // If already consented to analytics, load immediately
-    if (typeof NuvoConsent !== 'undefined' && NuvoConsent.hasConsent('analytics')) {
+    if (typeof NuvoConsent !== 'undefined' && NuvoConsent.hasConsent(category)) {
       loadHotjar(hjid);
     }
 
     // Listen for future consent
-    window.addEventListener('nuvo-consent-granted-analytics', function () {
+    window.addEventListener('nuvo-consent-granted-' + category, function () {
       loadHotjar(hjid);
     });
   }

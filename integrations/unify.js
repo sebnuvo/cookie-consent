@@ -22,6 +22,9 @@
 
   function init(config) {
     config = config || {};
+    // Which consent category gates this tag. Overridable per site (v1.5.0),
+    // because the right answer depends on how the site uses the vendor.
+    var category = config.category || 'analytics';
     var workspaceId = config.workspaceId;
     var apiKey = config.apiKey;
 
@@ -31,12 +34,12 @@
     }
 
     // If already consented to analytics, load immediately
-    if (typeof NuvoConsent !== 'undefined' && NuvoConsent.hasConsent('analytics')) {
+    if (typeof NuvoConsent !== 'undefined' && NuvoConsent.hasConsent(category)) {
       loadUnify(workspaceId, apiKey);
     }
 
     // Listen for future consent
-    window.addEventListener('nuvo-consent-granted-analytics', function () {
+    window.addEventListener('nuvo-consent-granted-' + category, function () {
       loadUnify(workspaceId, apiKey);
     });
   }

@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.5.0] — 2026-09-29
+
+### Added — the opt-out of sale and sharing, and a tag stack that is fully gated
+
+- **`NuvoConsent.optOutOfSale()` / `NuvoConsentUI.optOutOfSale()`.** One-click "Do Not Sell or Share My
+  Personal Information": turns `marketing` off, keeps the rest, stores it as the visitor's choice, and
+  (UI) opens the preferences with a confirmation line. Fires `nuvo-consent-sale-optout`.
+- **Global Privacy Control means what the law says.** In a notice country a GPC browser keeps the
+  analytics defaults and loses `marketing` (sale/sharing). 1.4.0 switched everything off.
+- **`integrations/gtm.js`.** Google Tag Manager, gated like every other tag (`gtm: { id, category }`,
+  default `analytics`).
+- **Per-integration `category` override** for Hotjar, HubSpot, LinkedIn, Meta Pixel, Unify and GTM,
+  e.g. `unify: { ..., category: 'marketing' }`.
+- **Notice copy** now names analytics and advertising and points at the "Do Not Sell or Share" link.
+- Tests: 25 pass (GPC as sale opt-out, marketing defaults, opt-out of sale, GTM gating, category override).
+
 ## [1.4.0] — 2026-09-23
 
 ### Added — region regimes (opt-in where required, notice-and-opt-out where allowed)

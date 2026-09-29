@@ -12,6 +12,8 @@ import { makeDom, install } from './dom-shim.mjs';
 
 const src = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const FILES = {
+  gtm: src('integrations/gtm.js'),
+  unify: src('integrations/unify.js'),
   manager: src('consent-manager.js'),
   ui: src('consent-ui.js'),
   ga: src('integrations/google-analytics.js'),
@@ -44,7 +46,7 @@ async function boot({ country = 'US', gpc = false, stored = null, config = CONFI
       : Promise.reject(new Error('offline')),
   });
   dom.win.NUVO_CONSENT_CONFIG = config;
-  for (const k of ['manager', 'ga', 'hs', 'ui']) new Function(FILES[k])();
+  for (const k of ['manager', 'ga', 'hs', 'gtm', 'unify', 'ui']) new Function(FILES[k])();
   await new Promise((r) => setTimeout(r, 10));
   return dom;
 }
@@ -86,11 +88,14 @@ test('an unknown country stays opt-in', async () => {
   assert.equal(configured(dom).includes('G-TEST111'), false);
 });
 
-test('Global Privacy Control is an opt-out, even in the US', async () => {
-  const dom = await boot({ country: 'US', gpc: true });
-  assert.equal(dom.win.NuvoConsent.region().mode, 'consent');
-  assert.equal(dom.win.NuvoConsent.hasConsent('analytics'), false);
-  assert.equal(configured(dom).includes('G-TEST111'), false);
+test('Global Privacy Control opts out of sale and sharing, not analytics (v1.5.0)', async () => {
+  const dom = await boot({ country: 'US', gpc: true, config: { ...CONFIG, regions: { notice: ['US', 'MX'], noticeDefaults: { analytics: true, marketing: true } } } });
+  const c = dom.win.NuvoConsent;
+  assert.equal(c.region().mode, 'notice');
+  assert.equal(c.hasConsent('analytics'), true);
+  assert.equal(c.hasConsent('marketing'), false, 'GPC must switch off sale/sharing');
+  assert.ok(configured(dom).includes('G-TEST111'));
+  assert.equal(configured(dom).includes('AW-999'), false);
 });
 
 test('a stored Reject wins over the notice default', async () => {
@@ -111,4 +116,51 @@ test('without `regions`, behaviour is exactly v1.3.0', async () => {
   const dom = await boot({ country: 'US', config: plain });
   assert.equal(dom.win.NuvoConsent.region().mode, 'consent');
   assert.equal(configured(dom).includes('G-TEST111'), false);
+});
+
+/* ── v1.5.0: marketing by default, the opt-out of sale, category overrides ── */
+
+const FULL = {
+  ...CONFIG,
+  gtm: { id: 'GTM-TEST1' },
+  unify: { workspaceId: 'W', apiKey: 'K', category: 'marketing' },
+  regions: { notice: ['US', 'MX'], noticeDefaults: { analytics: true, marketing: true } },
+};
+const gtmLoaded = (dom) => (dom.win.dataLayer || []).some((e) => e && e.event === 'gtm.js');
+
+test('US with marketing defaults: ads configure and GTM loads without a click', async () => {
+  const dom = await boot({ country: 'US', config: FULL });
+  assert.equal(dom.win.NuvoConsent.hasConsent('marketing'), true);
+  assert.ok(configured(dom).includes('AW-999'), 'Google Ads should configure by default in the US');
+  assert.ok(gtmLoaded(dom), 'GTM should load under analytics');
+  assert.equal(lastConsentUpdate(dom).ad_storage, 'granted');
+});
+
+test('Germany with the same config: nothing loads, GTM included', async () => {
+  const dom = await boot({ country: 'DE', config: FULL });
+  assert.equal(gtmLoaded(dom), false);
+  assert.equal(configured(dom).length, 0);
+});
+
+test('"Do Not Sell or Share" turns marketing off, keeps analytics, and is stored', async () => {
+  const dom = await boot({ country: 'US', config: FULL });
+  dom.win.NuvoConsent.optOutOfSale();
+  const c = dom.win.NuvoConsent;
+  assert.equal(c.hasConsent('marketing'), false);
+  assert.equal(c.hasConsent('analytics'), true);
+  assert.equal(c.hasInteracted(), true, 'the opt-out is a stored choice');
+  assert.equal(lastConsentUpdate(dom).ad_storage, 'denied');
+  assert.equal(lastConsentUpdate(dom).analytics_storage, 'granted');
+});
+
+test('an integration can be moved to another category', async () => {
+  // Unify set to marketing: a GPC browser in the US must not load it.
+  const dom = await boot({ country: 'US', gpc: true, config: FULL });
+  assert.equal(dom.win.NuvoConsent.hasConsent('marketing'), false);
+  assert.equal(typeof dom.win.unifyBrowser, 'undefined', 'Unify must not load when marketing is off');
+});
+
+test('the same Unify loads when marketing is on', async () => {
+  const dom = await boot({ country: 'US', config: FULL });
+  assert.notEqual(typeof dom.win.unifyBrowser, 'undefined');
 });
