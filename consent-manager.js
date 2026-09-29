@@ -5,7 +5,7 @@
  * Handles consent state, localStorage persistence, Google Consent Mode v2,
  * and CustomEvent dispatching for third-party script gating.
  *
- * @version 1.4.0
+ * @version 1.5.0
  * @license MIT
  */
 ;(function (root, factory) {
@@ -204,9 +204,12 @@
   //            the US state privacy laws (CCPA/CPRA and others) and Mexico's
   //            LFPDPPP, for first-party analytics.
   //
-  // Global Privacy Control is an opt-out everywhere: a browser that sends it
-  // is treated as `consent`, never `notice`. California and several other
-  // states require honouring it.
+  // Global Privacy Control is an opt-out of SALE AND SHARING, which is what it
+  // means in law (California, Colorado, Connecticut, Texas and others): in a
+  // notice country a GPC browser still gets the analytics defaults, but never
+  // `marketing` (ads, retargeting, visitor identification). Before 1.5.0 GPC
+  // switched off everything, which was stricter than the law asks. An explicit
+  // Accept still wins, as the regulations allow.
   //
   // Nothing about a notice default is stored. It is re-derived on every page,
   // so a visitor who travels, or turns GPC on, gets the right answer next time,
@@ -262,7 +265,7 @@
   }
 
   // ─── Main API ──────────────────────────────────────────────────────
-  var VERSION = '1.4.0';
+  var VERSION = '1.5.0';
 
   var _config = {};
   var _state = null;
@@ -320,7 +323,7 @@
     resolveRegion: function (done) {
       var cfg = _config.regions;
       _region.gpc = hasGpc();
-      if (!cfg || !cfg.notice || !cfg.notice.length || _state || _region.gpc) {
+      if (!cfg || !cfg.notice || !cfg.notice.length || _state) {
         _region.resolved = true;
         if (done) done(_region);
         return;
@@ -332,11 +335,33 @@
         if (!_state && country && cfg.notice.indexOf(country) !== -1) {
           _region.mode = 'notice';
           _implied = noticeCategories(cfg.noticeDefaults || { analytics: true });
+          if (_region.gpc) _implied.marketing = false;
           updateGoogleConsent(_implied);
           dispatchConsentEvent(_implied, true);
         }
         if (done) done(_region);
       });
+    },
+
+    /**
+     * "Do Not Sell or Share My Personal Information" (v1.5.0).
+     *
+     * Turns off `marketing` (advertising, retargeting, visitor identification)
+     * and keeps every other category as it currently stands, then stores that
+     * as the visitor's choice. One click, no form: the CCPA's opt-out of sale
+     * and sharing, and in Mexico the refusal of secondary purposes.
+     * @returns {Object} the stored consent data
+     */
+    optOutOfSale: function () {
+      var current = _state && _state.categories
+        ? Object.assign({}, _state.categories)
+        : (_implied ? Object.assign({}, _implied) : noticeCategories({}));
+      current.marketing = false;
+      var result = NuvoConsent.setConsent(current);
+      if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('nuvo-consent-sale-optout', { detail: { categories: current } }));
+      }
+      return result;
     },
 
     /**

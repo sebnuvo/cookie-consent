@@ -24,7 +24,8 @@
       // Shown instead of bannerText where analytics runs by default (notice
       // regions: US, MX). The consent text says nothing activates until the
       // visitor agrees, which would be untrue there.
-      noticeText: 'We use analytics cookies to understand how visitors use our site, so we can improve it. Advertising cookies stay off unless you accept them. You can turn analytics off at any time with Reject All or Customize.',
+      noticeText: 'We use cookies and similar technologies for analytics and advertising: to understand how our site is used, to measure our campaigns, and to recognise the companies that visit. You can opt out at any time with Reject All, Customize, or \u201cDo Not Sell or Share My Personal Information\u201d at the bottom of every page.',
+      saleOptOutDone: 'You have opted out of the sale and sharing of your personal information. Advertising and visitor identification are off.',
       modalTitle: 'Cookie Preferences',
       modalDesc: 'Manage your cookie preferences below. Essential cookies are always active as they are required for the website to function.',
       acceptAll: 'Accept All',
@@ -43,7 +44,8 @@
     es: {
       bannerTitle: 'Valoramos tu privacidad',
       bannerText: 'Utilizamos cookies y tecnolog\u00edas de rastreo similares para analizar el tr\u00e1fico del sitio, personalizar contenido y mostrar publicidad relevante. Algunas de estas tecnolog\u00edas transmiten datos \u2014 incluyendo tu direcci\u00f3n IP e identificadores de dispositivo \u2014 a servicios de terceros. Estas tecnolog\u00edas no se activar\u00e1n hasta que proporciones tu consentimiento. Puedes aceptar todas, rechazar todas o personalizar tus preferencias a continuaci\u00f3n.',
-      noticeText: 'Usamos cookies de an\u00e1lisis para entender c\u00f3mo se usa nuestro sitio y mejorarlo. Las cookies de publicidad permanecen desactivadas a menos que las aceptes. Puedes desactivar el an\u00e1lisis en cualquier momento con Rechazar Todas o Personalizar.',
+      noticeText: 'Usamos cookies y tecnolog\u00edas similares para an\u00e1lisis y publicidad: para entender c\u00f3mo se usa nuestro sitio, medir nuestras campa\u00f1as y reconocer a las empresas que nos visitan. Puedes oponerte en cualquier momento con Rechazar Todas, Personalizar o \u201cNo vender ni compartir mi informaci\u00f3n personal\u201d al final de cada p\u00e1gina.',
+      saleOptOutDone: 'Te has opuesto a la venta y el intercambio de tu informaci\u00f3n personal. La publicidad y la identificaci\u00f3n de visitantes est\u00e1n desactivadas.',
       modalTitle: 'Preferencias de Cookies',
       modalDesc: 'Administra tus preferencias de cookies a continuaci\u00f3n. Las cookies esenciales siempre est\u00e1n activas ya que son necesarias para el funcionamiento del sitio web.',
       acceptAll: 'Aceptar Todas',
@@ -78,6 +80,12 @@
 
   function t(key) {
     var lang = _detectedLang || 'en';
+    // A site can override any string per language (v1.5.0), e.g.
+    // ui: { texts: { en: { noticeText: '…' }, es: { noticeText: '…' } } }
+    // so the banner always describes what that site actually runs.
+    var custom = (_cfg && _cfg.texts) || {};
+    if (custom[lang] && custom[lang][key]) return custom[lang][key];
+    if (custom.en && custom.en[key] && !(TRANSLATIONS[lang] && TRANSLATIONS[lang][key])) return custom.en[key];
     var strings = TRANSLATIONS[lang] || TRANSLATIONS.en;
     return strings[key] || TRANSLATIONS.en[key] || key;
   }
@@ -111,6 +119,7 @@
   var _bannerEl = null;
   var _overlayEl = null;
   var _stickyEl = null;
+  var _saleNotice = false;
   var _uiInitialized = false;
   var _handleModalKeydown = null;
 
@@ -264,6 +273,12 @@
     var desc = el('p', { className: 'nuvo-cc-modal__desc' });
     var readOur = _detectedLang === 'es' ? 'Lee nuestra ' : 'Read our ';
     desc.innerHTML = t('modalDesc') + ' ' + readOur + '<a href="' + _cfg.policyUrl + '" target="_blank" rel="noopener">' + t('privacyPolicy') + '</a>.';
+    // Confirmation after "Do Not Sell or Share": the modal opens showing the
+    // choice that was just stored, with one line saying what it did.
+    if (_saleNotice) {
+      _saleNotice = false;
+      desc.innerHTML = '<strong>' + t('saleOptOutDone') + '</strong><br>' + desc.innerHTML;
+    }
     header.appendChild(title);
     header.appendChild(desc);
 
@@ -542,6 +557,16 @@
      * Programmatically show the preferences modal
      */
     showPreferences: showPreferences,
+
+    /**
+     * "Do Not Sell or Share My Personal Information": store the opt-out, then
+     * show the preferences with a confirmation line (v1.5.0).
+     */
+    optOutOfSale: function () {
+      NuvoConsent.optOutOfSale();
+      _saleNotice = true;
+      showPreferences();
+    },
 
     /**
      * Programmatically show the banner

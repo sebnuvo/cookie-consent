@@ -31,6 +31,9 @@
 
   function init(config) {
     config = config || {};
+    // Which consent category gates this tag. Overridable per site (v1.5.0),
+    // because the right answer depends on how the site uses the vendor.
+    var category = config.category || 'marketing';
     var pixelId = config.pixelId;
 
     if (!pixelId) {
@@ -39,12 +42,12 @@
     }
 
     // If already consented to marketing, load immediately
-    if (typeof NuvoConsent !== 'undefined' && NuvoConsent.hasConsent('marketing')) {
+    if (typeof NuvoConsent !== 'undefined' && NuvoConsent.hasConsent(category)) {
       loadMetaPixel(pixelId);
     }
 
     // Listen for future consent
-    window.addEventListener('nuvo-consent-granted-marketing', function () {
+    window.addEventListener('nuvo-consent-granted-' + category, function () {
       loadMetaPixel(pixelId);
     });
   }
