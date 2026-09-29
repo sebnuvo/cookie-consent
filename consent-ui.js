@@ -80,6 +80,12 @@
 
   function t(key) {
     var lang = _detectedLang || 'en';
+    // A site can override any string per language (v1.5.0), e.g.
+    // ui: { texts: { en: { noticeText: '…' }, es: { noticeText: '…' } } }
+    // so the banner always describes what that site actually runs.
+    var custom = (_cfg && _cfg.texts) || {};
+    if (custom[lang] && custom[lang][key]) return custom[lang][key];
+    if (custom.en && custom.en[key] && !(TRANSLATIONS[lang] && TRANSLATIONS[lang][key])) return custom.en[key];
     var strings = TRANSLATIONS[lang] || TRANSLATIONS.en;
     return strings[key] || TRANSLATIONS.en[key] || key;
   }

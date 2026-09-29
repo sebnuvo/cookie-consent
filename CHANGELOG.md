@@ -13,6 +13,7 @@
   default `analytics`).
 - **Per-integration `category` override** for Hotjar, HubSpot, LinkedIn, Meta Pixel, Unify and GTM,
   e.g. `unify: { ..., category: 'marketing' }`.
+- **`ui.texts` overrides** any banner string per language (`{ en: { noticeText } , es: {...} }`), so a site's banner describes what it actually runs.
 - **Notice copy** now names analytics and advertising and points at the "Do Not Sell or Share" link.
 - Tests: 25 pass (GPC as sale opt-out, marketing defaults, opt-out of sale, GTM gating, category override).
 
